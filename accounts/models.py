@@ -37,6 +37,14 @@ class UserManager(BaseUserManager):
         return user
 
 
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+
 class User(AbstractUser):
     RESTAURANT = 1
     CUSTOMER = 2
@@ -53,11 +61,11 @@ class User(AbstractUser):
 
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now_add=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
     is_admin = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
     is_superadmin = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
@@ -74,3 +82,20 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class UserProfile(BaseModel):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_pic = models.ImageField(upload_to='users/profile_pictures', blank=True, null=True)
+    cover_photo = models.ImageField(upload_to='users/cover_photos', blank=True, null=True)
+    address_line_1 = models.CharField(max_length=50, blank=True, null=True)
+    address_line_2 = models.CharField(max_length=50, blank=True, null=True)
+    country = models.CharField(max_length=50, blank=True, null=True)
+    city = models.CharField(max_length=50, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    pin_code = models.CharField(max_length=50, blank=True, null=True)
+    lat = models.CharField(max_length=50, blank=True, null=True)
+    lng = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return self.user.email
