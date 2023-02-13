@@ -56,7 +56,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=50)
     email = models.EmailField(max_length=100, unique=True)
     username = models.CharField(max_length=100, unique=True)
-    phone = models.CharField(max_length=20, unique=True, blank=True)
+    phone = models.CharField(max_length=20, unique=True, blank=True, null=True)
     role = models.PositiveSmallIntegerField(choices=ROLE_CHOICE, blank=True, null=True)
 
     date_joined = models.DateTimeField(auto_now_add=True)

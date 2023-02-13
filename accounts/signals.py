@@ -11,5 +11,5 @@ def post_save_create_profile_receiver(sender, instance, created, **kwargs):
 
 
 @receiver(pre_save, sender=User)
-def pre_save_profile_receiver(sender, instance, created, **kwargs):
+def pre_save_profile_receiver(sender, instance, **kwargs):
     print('before user is created')
