@@ -1,12 +1,36 @@
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.contrib import messages, auth
 from accounts.forms import UserForm
 from accounts.models import User
+from accounts.utils import detect_user
 from vendor.forms import VendorForm
+from django.core.exceptions import PermissionDenied
 
 
 # Create your views here.
+def get_user_details_from_request(request):
+    pass
+
+
+# Restrict user from accessing wrong dashboard
+def check_role_vendor(user):
+    if user.role == 1:
+        return True
+    else:
+        raise PermissionDenied()
+
+
+def check_role_customer(user):
+    if user.role == 2:
+        return True
+    else:
+        raise PermissionDenied()
+
+
 def register_user(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     if request.method == 'POST':
         form = UserForm(request.POST)
         if form.is_valid():
@@ -30,6 +54,8 @@ def register_user(request):
 
 
 def register_vendor(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     if request.method == 'POST':
         form = UserForm(request.POST)
         v_form = VendorForm(request.POST, request.FILES)
@@ -54,4 +80,49 @@ def register_vendor(request):
             'form': form,
             'v_form': v_form
         }
-    return render(request, 'accounts/register-vendor.html', context)
+        return render(request, 'accounts/register-vendor.html', context)
+
+
+def login(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        email = request.POST['email']
+        password = request.POST['password']
+
+        user = auth.authenticate(email=email, password=password)
+
+        if user:
+            auth.login(request, user)
+            messages.success(request, 'Logged in successfully')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Your credentials do not match our records')
+            return redirect('login')
+    return render(request, 'accounts/login.html')
+
+
+@login_required(login_url='login')
+def logout(request):
+    auth.logout(request)
+    messages.info(request, 'Logged out successfully')
+    return redirect('home')
+
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
+def dashboard(request):
+    return render(request, 'accounts/dashboard.html')
+
+
+@login_required(login_url='login')
+@user_passes_test(check_role_customer)
+def vendor_dashboard(request):
+    return render(request, 'accounts/vendor-dashboard.html')
+
+
+@login_required(login_url='login')
+def profile(request):
+    user = request.user
+    redirect_url = detect_user(user)
+    return redirect(redirect_url)
