@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.tokens import default_token_generator
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib import messages, auth
 from django.utils.http import urlsafe_base64_decode
@@ -47,7 +48,8 @@ def register_user(request):
             user.save()
 
             # Send  verification email
-            send_verification_email(request, user)
+            send_verification_email(request, user, 'Please activate your account',
+                                    'accounts/emails/account_verification.html')
             messages.success(request, 'Your account has been created successfully')
             return redirect('register-user')
             pass
@@ -152,5 +154,31 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, 'Invalid activation link.')
         return redirect(request, 'dashboard')
-    # activate the user by setting the is_active status to True
-    return
+
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST['email']
+
+        if User.objects.filter(email=email).exists():
+            user = User.objects.get(email__exact=email)
+            # send reset password email
+            send_verification_email(request, user, 'Reset your password',
+                                    'accounts/emails/reset_password.html')
+
+        messages.success(request, "You'll receive an email if your account exists")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    return render(request, "accounts/forgot-password.html")
+
+
+def reset_password(request):
+    return render(request, "accounts/reset-password.html")
+
+
+def reset_password_validate(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user: User | None = User._default_manager.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    return None

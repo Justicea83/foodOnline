@@ -20,18 +20,15 @@ def detect_user(user):
     return url
 
 
-def send_verification_email(request, user: User):
+def send_verification_email(request, user: User, subject: str, template_name: str):
     from_email = settings.DEFAULT_FROM_EMAIL
     current_site = get_current_site(request)
-    mail_subject = 'Please activate your account'
-    message = render_to_string('accounts/emails/account_verification.html', {
+    message = render_to_string(template_name, {
         'user': user,
         'domain': current_site,
         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
         'token': default_token_generator.make_token(user)
     })
     to_email = user.email
-    mail = EmailMessage(mail_subject, message, from_email, to=[to_email])
+    mail = EmailMessage(subject, message, from_email, to=[to_email])
     mail.send()
-
-    pass
